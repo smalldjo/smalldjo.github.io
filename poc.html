@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dimensions & Tag Hierarchy Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            background-color: #f9f9f9;
+        }
+        .section-title {
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ddd;
+            color: #333;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 50%;
+            max-width: 500px;
+        }
+        .list-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .list-item:hover {
+            background-color: #e9ecef;
+        }
+        .list-item.selected {
+            background-color: #007bff;
+            color: white;
+        }
+        .dimension-item {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            background-color: #f1f1f1;
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .indent-1 {
+            margin-left: 20px;
+        }
+        .indent-2 {
+            margin-left: 40px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: monospace;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .dimension-container {
+            margin-bottom: 10px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .add-btn {
+            margin-left: 8px;
+            padding: 4px 8px;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .hierarchy-container {
+            margin-top: 20px;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background-color: white;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+        padding: 10px 20px;
+        margin-right: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+        color: #333;
+        cursor: pointer;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    .tab-btn:hover {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .tab-btn.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .tabs {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .skills-container {
+        margin: 10px 0;
+    }
+
+    .skills-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 5px 0;
+    }
+
+    .skills-item label {
+        flex: 1;
+        cursor: pointer;
+    }
+
+    .skills-item input[type="checkbox"] {
+        cursor: pointer;
+    }
+
+    .skills-actions {
+        margin-left: 20px;
+    }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8">Dimensions & Tag Hierarchy Manager</h1>
+        
+
+        <div class="tabs">
+            <button class="tab-btn" data-tab="section1">1. Dimension management</button>
+            <button class="tab-btn" data-tab="section2">2. CS Tags management</button>
+            <button class="tab-btn" data-tab="section3">3. Chat</button>
+            <button class="tab-btn" data-tab="section4">4. Skills</button>
+            <button class="tab-btn" data-tab="section5">5. Tag lookup</button>
+        </div>
+
+
+        <div class="section" data-tab-content="section1">
+             <!-- Section 1: Dimension Management -->
+        <div class="section">
+            <h2 class="section-title text-xl font-semibold">Section 1: Dimension Management</h2>
+            
+            <div class="flex justify-between items-center mb-4">
+                <div></div>
+                <button id="addItemBtn" class="btn btn-primary">Add Item</button>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th width="30%">Dimensions</th>
+                        <th width="70%">Items</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div id="dimensionList" class="dimension-list">
+                                <!-- Dimensions will be added here -->
+                            </div>
+                        </td>
+                        <td>
+                            <div id="itemsList" class="items-list">
+                                <!-- Items will be displayed here -->
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        </div>
+        <div class="section" data-tab-content="section2" style="display: none;">
+            <!-- Section 2: Tag Hierarchy Builder -->
+            <div class="section">
+                <h2 class="section-title text-xl font-semibold">Section 2: Tag Hierarchy Builder</h2>
+                
+                <div id="hierarchyBuilder">
+                    <div class="flex justify-between mb-4">
+                        <button id="addDimension1Btn" class="btn btn-primary">Add Product</button>
+                        <button id="resetTagsBtn" class="btn btn-secondary">Reset Tags</button>
+                    </div>
+                    
+                    <div id="hierarchyContainer" class="hierarchy-container">
+                        <!-- Hierarchy will be built here -->
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-medium mb-2">Data structure</h3>
+                <button id="toggleJsonBtn" class="btn btn-secondary mb-2">Click to show/hide</button>
+                    <div id="tagsJsonContainer" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">
+                    <pre id="tagsJson"></pre>
+                </div>
+            </div>           
+        </div>
+        <div class="section" data-tab-content="section3" style="display: none;">
+            <!-- Section 3: Tag Display -->
+            <div class="section">
+                <h2 class="section-title text-xl font-semibold">Section 3: Tag Display</h2>
+                
+                <div class="mb-4">
+                    <label for="tagDropdown" class="block mb-2 font-medium">Tags:</label>
+                    <select id="tagDropdown" class="w-full">
+                        <option value="">-- Select a tag --</option>
+                        <!-- Tags will be added here -->
+                    </select>
+                    <div id="selected_tag_underscore_format"></div>
+                </div>
+                
+                
+            </div>
+        </div>        
+        <div class="section" data-tab-content="section4" style="display: none;">
+    <div class="section">
+        <h2 class="section-title text-xl font-semibold">Section 4: Skills</h2>
+        
+        <div id="skillsContainer">
+            <!-- Skills hierarchy will be built here -->
+        </div>
+    </div>
+</div>
+
+<div class="section" data-tab-content="section5" style="display: none;">
+    <div class="section">
+        <h2 class="section-title text-xl font-semibold">Section 5: Tag Lookup</h2>
+        
+        <div class="mb-4">
+            <label for="tagLookupInput" class="block mb-2 font-medium">Enter Tag ID:</label>
+            <div class="flex gap-2">
+                <input type="text" id="tagLookupInput" class="flex-1 p-2 border rounded" placeholder="Enter tag ID...">
+                <button id="lookupTagBtn" class="btn btn-primary">Lookup</button>
+            </div>
+        </div>
+
+        <div id="tagLookupResult" class="mt-4" style="display: none;">
+            <div id="dimensionsInfo" class="p-4 bg-gray-100 rounded mb-4">
+                <!-- Dimensions info will be shown here -->
+            </div>
+            <div id="skillInfo" class="p-4 bg-gray-100 rounded">
+                <!-- Skill info will be shown here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+
+        <!-- Add Item Modal -->
+        <div id="addItemModal" class="modal">
+            <div class="modal-content">
+                <h3 class="text-lg font-semibold mb-4">Add Item to <span id="modalDimensionName"></span></h3>
+                <input type="text" id="newItemInput" class="w-full p-2 border rounded mb-4" placeholder="Enter new item">
+                <div class="flex justify-end">
+                    <button id="cancelAddItem" class="btn btn-secondary mr-2">Cancel</button>
+                    <button id="confirmAddItem" class="btn btn-primary">Add</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Select Dimension Item Modal -->
+        <div id="selectItemModal" class="modal">
+            <div class="modal-content">
+                <h3 class="text-lg font-semibold mb-4">Select <span id="selectModalTitle"></span> Item</h3>
+                <div id="selectItemsList" class="mb-4">
+                    <!-- Items to select will be displayed here -->
+                </div>
+                <div class="flex justify-end">
+                    <button id="cancelSelectItem" class="btn btn-secondary mr-2">Cancel</button>
+                    <button id="confirmSelectItem" class="btn btn-primary">Select</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        //script to toggle tabs
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('[data-tab-content]');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.getAttribute('data-tab');
+                    tabContents.forEach(content => {
+                        content.style.display = content.getAttribute('data-tab-content') === targetTab ? 'block' : 'none';
+                    });
+                });
+            });
+
+
+        // Data structure to store dimensions and items
+        const dimensions = {
+            product: [],
+            action: [],
+            root_cause: [],
+            entity: [],
+            user_type: []
+        };
+        
+        // Data structure to store created tags
+        let tags = [];
+        
+        // Replace the sequentialCounter declaration with localStorage-based initialization
+        let sequentialCounter = parseInt(localStorage.getItem('sequentialCounter') || '1');
+
+        // Add new function to save counter
+        function saveSequentialCounter() {
+            localStorage.setItem('sequentialCounter', sequentialCounter.toString());
+        }
+        
+        // Currently selected dimension
+        let selectedDimension = 'product';
+        
+        // DOM elements
+        const dimensionListEl = document.getElementById('dimensionList');
+        const itemsListEl = document.getElementById('itemsList');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const addItemModal = document.getElementById('addItemModal');
+        const modalDimensionName = document.getElementById('modalDimensionName');
+        const newItemInput = document.getElementById('newItemInput');
+        const confirmAddItem = document.getElementById('confirmAddItem');
+        const cancelAddItem = document.getElementById('cancelAddItem');
+        const hierarchyContainer = document.getElementById('hierarchyContainer');
+        const addDimension1Btn = document.getElementById('addDimension1Btn');
+        const selectItemModal = document.getElementById('selectItemModal');
+        const selectModalTitle = document.getElementById('selectModalTitle');
+        const selectItemsList = document.getElementById('selectItemsList');
+        const confirmSelectItem = document.getElementById('confirmSelectItem');
+        const cancelSelectItem = document.getElementById('cancelSelectItem');
+        const tagsJson = document.getElementById('tagsJson');
+        const tagDropdown = document.getElementById('tagDropdown');
+        const toggleJsonBtn = document.getElementById('toggleJsonBtn');
+        const tagsJsonContainer = document.getElementById('tagsJsonContainer');
+        
+        // Variables for the selection modal
+        let currentSelectAction = '';
+        let currentParentId = null;
+        let selectedItemId = null;
+        
+        // Generate a unique ID
+        function generateId() {
+            return '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // Initialize dimensions
+        function initDimensions() {
+            // Load from localStorage if available
+            const savedDimensions = localStorage.getItem('dimensions');
+            if (savedDimensions) {
+                Object.assign(dimensions, JSON.parse(savedDimensions));
+            }
+            
+            const savedTags = localStorage.getItem('tags');
+            if (savedTags) {
+                tags = JSON.parse(savedTags);
+                rebuildHierarchy(); // Add this line
+            }
+            
+            renderDimensionList();
+            renderItemsList();
+            renderTags();
+            renderSkills(); // Add this line
+        }
+        
+        // Render the list of dimensions
+        function renderDimensionList() {
+            dimensionListEl.innerHTML = '';
+            
+            Object.keys(dimensions).forEach(dim => {
+                const dimItem = document.createElement('div');
+                dimItem.className = `list-item ${selectedDimension === dim ? 'selected' : ''}`;
+                dimItem.textContent = dim;
+                dimItem.addEventListener('click', () => {
+                    selectedDimension = dim;
+                    renderDimensionList();
+                    renderItemsList();
+                });
+                dimensionListEl.appendChild(dimItem);
+            });
+        }
+        
+        // Render the items for the selected dimension
+        function renderItemsList() {
+            itemsListEl.innerHTML = '';
+            
+            if (dimensions[selectedDimension].length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'p-4 text-gray-500 italic';
+                emptyMsg.textContent = 'No items in this dimension';
+                itemsListEl.appendChild(emptyMsg);
+                return;
+            }
+            
+            dimensions[selectedDimension].forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'dimension-item';
+                itemEl.textContent = item;
+                itemsListEl.appendChild(itemEl);
+            });
+        }
+        
+        // Open the add item modal
+        addItemBtn.addEventListener('click', () => {
+            modalDimensionName.textContent = selectedDimension;
+            newItemInput.value = '';
+            addItemModal.style.display = 'block';
+        });
+        
+        // Close the add item modal
+        cancelAddItem.addEventListener('click', () => {
+            addItemModal.style.display = 'none';
+        });
+        
+        // Add a new item to the selected dimension
+        confirmAddItem.addEventListener('click', () => {
+            const newItem = newItemInput.value.trim();
+            if (newItem) {
+                dimensions[selectedDimension].push(newItem);
+                saveDimensions();
+                renderItemsList();
+                addItemModal.style.display = 'none';
+            }
+        });
+        
+        // Open the dimension 1 selection modal
+        addDimension1Btn.addEventListener('click', () => {
+            openSelectModal('product', null);
+        });
+        
+        // Open the selection modal
+        function openSelectModal(dimension, parentId) {
+            currentSelectAction = dimension;
+            currentParentId = parentId;
+            selectedItemId = null;
+            
+            selectModalTitle.textContent = dimension;
+            selectItemsList.innerHTML = '';
+            
+            // Check if there are items in this dimension
+            if (dimensions[dimension].length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'p-4 text-gray-500 italic';
+                emptyMsg.textContent = `No items in ${dimension}. Please add items in Section 1 first.`;
+                selectItemsList.appendChild(emptyMsg);
+                confirmSelectItem.disabled = true;
+                return;
+            }
+
+            // Get used items
+            const usedItems = new Set();
+            
+            if (dimension === 'product') {
+                // For products, check globally across all tags
+                tags.forEach(tag => {
+                    usedItems.add(tag.product);
+                });
+            } else if (dimension === 'action' && parentId) {
+                // For actions, check only under the current product
+                const parentElement = document.getElementById(parentId);
+                if (parentElement) {
+                    const childrenElements = document.querySelectorAll(`[data-parent="${parentId}"]`);
+                    childrenElements.forEach(child => {
+                        usedItems.add(child.dataset.value);
+                    });
+                }
+            }
+            
+            // Create the list of items to select
+            let hasAvailableItems = false;
+            dimensions[dimension].forEach(item => {
+                if (!usedItems.has(item)) {
+                    hasAvailableItems = true;
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'list-item';
+                    itemEl.textContent = item;
+                    itemEl.addEventListener('click', () => {
+                        selectItemsList.querySelectorAll('.list-item').forEach(el => {
+                            el.classList.remove('selected');
+                        });
+                        itemEl.classList.add('selected');
+                        selectedItemId = item;
+                    });
+                    selectItemsList.appendChild(itemEl);
+                }
+            });
+
+            if (!hasAvailableItems) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'p-4 text-gray-500 italic';
+                emptyMsg.textContent = dimension === 'product' ? 
+                    'All products have been used.' : 
+                    'All actions for this product have been used.';
+                selectItemsList.appendChild(emptyMsg);
+                confirmSelectItem.disabled = true;
+            } else {
+                confirmSelectItem.disabled = false;
+            }
+            
+            selectItemModal.style.display = 'block';
+        }
+        
+        // Close the selection modal
+        cancelSelectItem.addEventListener('click', () => {
+            selectItemModal.style.display = 'none';
+        });
+        
+        // Confirm item selection
+        confirmSelectItem.addEventListener('click', () => {
+            if (selectedItemId) {
+                if (currentSelectAction === 'product') {
+                    addDimension1Item(selectedItemId);
+                } else if (currentSelectAction === 'action') {
+                    addDimension2Item(currentParentId, selectedItemId);
+                } else if (currentSelectAction === 'level3') {
+                    addLevel3Items(currentParentId);
+                }
+                selectItemModal.style.display = 'none';
+            }
+        });
+        
+        // Add a dimension 1 item to the hierarchy
+        function addDimension1Item(item) {
+            const itemId = 'dim1_' + generateId();
+            
+            const itemContainer = document.createElement('div');
+            itemContainer.className = 'dimension-container';
+            itemContainer.id = itemId;
+            itemContainer.dataset.level = '1';
+            itemContainer.dataset.value = item;
+            
+            const itemEl = document.createElement('div');
+            itemEl.className = 'dimension-item';
+            itemEl.textContent = `${item}`;
+            
+            const addDim2Btn = document.createElement('button');
+            addDim2Btn.className = 'btn btn-primary add-btn';
+            addDim2Btn.textContent = 'Add Action';
+            addDim2Btn.addEventListener('click', () => {
+                openSelectModal('action', itemId);
+            });
+            
+            itemContainer.appendChild(itemEl);
+            itemContainer.appendChild(addDim2Btn);
+            hierarchyContainer.appendChild(itemContainer);
+        }
+        
+        // Add a dimension 2 item under a dimension 1 item
+        function addDimension2Item(parentId, item) {
+            const parent = document.getElementById(parentId);
+            if (!parent) return;
+            
+            const parentValue = parent.dataset.value;
+            const itemId = 'dim2_' + generateId();
+            
+            const itemContainer = document.createElement('div');
+            itemContainer.className = 'dimension-container indent-1';
+            itemContainer.id = itemId;
+            itemContainer.dataset.level = '2';
+            itemContainer.dataset.value = item;
+            itemContainer.dataset.parent = parentId;
+            
+            // Create base tag_id for preview
+            const level2TagId = `${parentValue.replace(/ /g, '_')}_${item.replace(/ /g, '_')}`.toLowerCase();
+            
+            const itemEl = document.createElement('div');
+            itemEl.className = 'dimension-item';
+            itemEl.innerHTML = `${item} <span style="color: #666; font-size: 0.9em;">[${level2TagId}]</span>`;
+            
+            const addLevel3Btn = document.createElement('button');
+            addLevel3Btn.className = 'btn btn-primary add-btn';
+            addLevel3Btn.textContent = 'Add other dimensions';
+            addLevel3Btn.addEventListener('click', () => {
+                openLevel3Modal(itemId);
+            });
+            
+            itemContainer.appendChild(itemEl);
+            itemContainer.appendChild(addLevel3Btn);
+            
+            // Find the last level 3 item of the previous level 2 item
+            const children = Array.from(document.querySelectorAll(`[data-parent="${parentId}"]`));
+            if (children.length > 0) {
+                const lastLevel2Item = children[children.length - 1];
+                // Find its level 3 items
+                const level3Items = document.querySelectorAll(`[data-parent="${lastLevel2Item.id}"]`);
+                if (level3Items.length > 0) {
+                    // Insert after the last level 3 item
+                    level3Items[level3Items.length - 1].after(itemContainer);
+                } else {
+                    // If no level 3 items, insert after the level 2 item
+                    lastLevel2Item.after(itemContainer);
+                }
+            } else {
+                // If no previous items, insert after parent
+                parent.after(itemContainer);
+            }
+            
+            // Create tag automatically with just dimension 1 and 2
+            createTag(parentValue, item);
+        }
+        
+        // Open modal for level 3 dimensions
+        function openLevel3Modal(parentId) {
+            // Create modal content for level 3 (dimensions 3, 4, 5)
+            selectModalTitle.textContent = 'Other dimensions';
+            currentParentId = parentId;
+            currentSelectAction = 'level3';
+            
+            // Get the parent dimension 2 element
+            const parentEl = document.getElementById(parentId);
+            if (!parentEl) return;
+            
+            // Get the grandparent dimension 1 element
+            const grandparentId = parentEl.dataset.parent;
+            const grandparentEl = document.getElementById(grandparentId);
+            if (!grandparentEl) return;
+            
+            // Get values
+            const dim1Value = grandparentEl.dataset.value;
+            const dim2Value = parentEl.dataset.value;
+            
+            // Check if level 3 already exists
+            //const existingLevel3 = document.querySelector(`[data-parent="${parentId}"]`);
+            let dim3Value = '';
+            let dim4Value = '';
+            let dim5Value = '';
+            
+            //if (existingLevel3) {
+             //   dim3Value = existingLevel3.dataset.dim3 || '';
+              //  dim4Value = existingLevel3.dataset.dim4 || '';
+               // dim5Value = existingLevel3.dataset.dim5 || '';
+            //}
+            
+            // Build the form for level 3 dimensions
+            selectItemsList.innerHTML = `
+                <div class="mb-3">
+                    <label class="block mb-1">Root_cause:</label>
+                    <select id="dim3Select" class="w-full">
+                        <option value="">-- Optional --</option>
+                        ${dimensions.root_cause.map(item => `
+                            <option value="${item}" ${item === dim3Value ? 'selected' : ''}>${item}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="block mb-1">Entity:</label>
+                    <select id="dim4Select" class="w-full">
+                        <option value="">-- Optional --</option>
+                        ${dimensions.entity.map(item => `
+                            <option value="${item}" ${item === dim4Value ? 'selected' : ''}>${item}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="block mb-1">User_type:</label>
+                    <select id="dim5Select" class="w-full">
+                        <option value="">-- Optional --</option>
+                        ${dimensions.user_type.map(item => `
+                            <option value="${item}" ${item === dim5Value ? 'selected' : ''}>${item}</option>
+                        `).join('')}
+                    </select>
+                </div>
+            `;
+            
+            // Set selectedItemId to a non-null value so confirmation works
+            selectedItemId = 'level3';
+            
+            selectItemModal.style.display = 'block';
+        }
+        
+        // Add level 3 dimensions
+        function addLevel3Items(parentId) {
+            const dim3Select = document.getElementById('dim3Select');
+            const dim4Select = document.getElementById('dim4Select');
+            const dim5Select = document.getElementById('dim5Select');
+            
+            const dim3Value = dim3Select ? dim3Select.value : '';
+            const dim4Value = dim4Select ? dim4Select.value : '';
+            const dim5Value = dim5Select ? dim5Select.value : '';
+            
+            // Get the parent dimension 2 element
+            const parentEl = document.getElementById(parentId);
+            if (!parentEl) return;
+            
+            // Get the grandparent dimension 1 element
+            const grandparentId = parentEl.dataset.parent;
+            const grandparentEl = document.getElementById(grandparentId);
+            if (!grandparentEl) return;
+            
+            // Get values
+            const dim1Value = grandparentEl.dataset.value;
+            const dim2Value = parentEl.dataset.value;
+
+            // Update the tag structure and get the generated tag_id
+            const level3TagId = updateTagWithLevel3(dim1Value, dim2Value, dim3Value, dim4Value, dim5Value);
+            if (!level3TagId) return;  // If updateTagWithLevel3 failed, don't continue
+            
+            // Create new level 3 visual element
+            const itemId = 'level3_' + generateId();
+            const itemContainer = document.createElement('div');
+            itemContainer.className = 'dimension-container indent-2';
+            itemContainer.id = itemId;
+            itemContainer.dataset.level = '3';
+            itemContainer.dataset.parent = parentId;
+            itemContainer.dataset.dim3 = dim3Value;
+            itemContainer.dataset.dim4 = dim4Value;
+            itemContainer.dataset.dim5 = dim5Value;
+            
+            let displayText = 'Level 3: ';
+            if (dim3Value) displayText += `Dim3: ${dim3Value} `;
+            if (dim4Value) displayText += `Dim4: ${dim4Value} `;
+            if (dim5Value) displayText += `Dim5: ${dim5Value}`;
+            if (!dim3Value && !dim4Value && !dim5Value) displayText += '(None)';
+            
+            const itemEl = document.createElement('div');
+            itemEl.className = 'dimension-item';
+            itemEl.innerHTML = `${displayText} <span style="color: #666; font-size: 0.9em;">[${level3TagId}]</span>`;
+            
+            itemContainer.appendChild(itemEl);
+            
+            // Insert after the parent element
+            parentEl.after(itemContainer);
+            
+            // Close the modal
+            selectItemModal.style.display = 'none';
+        }
+        
+        // Create a new tag with dimension 1 and 2
+        function createTag(dim1, dim2) {
+            // Check if tag with this product already exists
+            const existingTag = tags.find(tag => tag.product === dim1);
+            
+            // Create tag_id for level 2 (product_action format)
+            const level2TagId = `${dim1.replace(/ /g, '_')}_${dim2.replace(/ /g, '_')}`.toLowerCase();
+            
+            if (existingTag) {
+                // Add new action under existing product
+                if (!existingTag.actions) {
+                    existingTag.actions = [];
+                }
+                // Check if this action already exists under this product
+                const existingAction = existingTag.actions.find(a => a.name === dim2);
+                if (!existingAction) {
+                    // Create new action with tag_id
+                    const newAction = {
+                        name: dim2,
+                        tag_id: level2TagId,
+                        dimensions: []
+                    };
+                    existingTag.actions.push(newAction);
+                    
+                    // Find and update the newly created action element
+                    const itemEl = document.querySelector(`[data-level="2"][data-value="${dim2}"] .dimension-item`);
+                    if (itemEl) {
+                        itemEl.innerHTML = `${dim2} <span style="color: #666; font-size: 0.9em;">[${level2TagId}]</span>`;
+                    }
+                    
+                    saveTags();
+                    renderTags();
+                    renderSkills();
+                }
+            } else {
+                // Create new product entry with this action
+                const newTag = {
+                    product: dim1,
+                    actions: [{
+                        name: dim2,
+                        tag_id: level2TagId,
+                        dimensions: []
+                    }]
+                };
+                tags.push(newTag);
+                
+                // Find and update the newly created action element
+                const itemEl = document.querySelector(`[data-level="2"][data-value="${dim2}"] .dimension-item`);
+                if (itemEl) {
+                    itemEl.innerHTML = `${dim2} <span style="color: #666; font-size: 0.9em;">[${level2TagId}]</span>`;
+                }
+                
+                saveTags();
+                renderTags();
+                renderSkills();
+            }
+        }
+        
+        // Update existing tag with level 3 dimensions
+        function updateTagWithLevel3(dim1, dim2, dim3, dim4, dim5) {
+            // Find the product
+            const existingTag = tags.find(tag => tag.product === dim1);
+            if (existingTag) {
+                // Find the action
+                const existingAction = existingTag.actions.find(action => action.name === dim2);
+                if (existingAction) {
+                    // Create base tag_id for level 3
+                    const baseTagId = `${dim1.replace(/ /g, '_')}_${dim2.replace(/ /g, '_')}`.toLowerCase();
+                    let level3TagId = baseTagId;
+                    if (dim3) {
+                        level3TagId += `_${dim3.replace(/ /g, '_')}`;
+                    }
+                    // Add sequential 3 digit number
+                    const sequentialNum = String(sequentialCounter).padStart(3, '0');
+                    level3TagId += `_${sequentialNum}`;
+                    sequentialCounter++;
+                    saveSequentialCounter();
+                    
+                    // Add new dimension set
+                    const newDimension = {
+                        root_cause: dim3 || null,
+                        entity: dim4 || null,
+                        user_type: dim5 || null,
+                        tag_id: level3TagId
+                    };
+                    
+                    existingAction.dimensions.push(newDimension);
+                    saveTags();
+                    renderTags();
+                    return level3TagId; // Return the generated tag_id for UI update
+                }
+            }
+            return null;  // Return null if we couldn't find the tag/action 
+        }
+        
+        // Render the tags in section 3
+        function renderTags() {
+            // Format tags for JSON display
+            const formattedTags = tags.map(tag => ({
+                product: tag.product,
+                actions: tag.actions.map(action => ({
+                    action: action.name,
+                    tag_id: action.tag_id,
+                    other_dimensions: action.dimensions
+                }))
+            }));
+
+            tagsJson.textContent = JSON.stringify(formattedTags, null, 2);
+
+            // Update dropdown
+            tagDropdown.innerHTML = '<option value="">-- Select a tag --</option>';
+            
+            tags.forEach((tag, productIndex) => {
+                tag.actions.forEach((action, actionIndex) => {
+                    // If there are no dimensions, add the product/action combination
+                    if (!action.dimensions || action.dimensions.length === 0) {
+                        const pathParts = [tag.product, action.name];
+                        const path = pathParts.join('/');
+                        const option = document.createElement('option');
+                        option.value = `${productIndex}-${actionIndex}-base`;
+                        option.textContent = path;
+                        tagDropdown.appendChild(option);
+                    }
+                    
+                    // Add entries for each dimension set
+                    action.dimensions.forEach((dim, dimIndex) => {
+                        const pathParts = [tag.product, action.name];
+                        if (dim.root_cause) pathParts.push(dim.root_cause);
+                        if (dim.entity) pathParts.push(dim.entity);
+                        // Removed user_type from path display
+                        
+                        const path = pathParts.join('/');
+                        const option = document.createElement('option');
+                        option.value = `${productIndex}-${actionIndex}-${dimIndex}`;
+                        option.textContent = path;
+                        tagDropdown.appendChild(option);
+                    });
+                });
+            });
+        }
+
+        // Update tag dropdown change handler
+        tagDropdown.addEventListener('change', () => {
+            const selectedIndex = tagDropdown.value;
+            if (selectedIndex === '') return;
+
+            // Parse the composite index
+            const [productIndex, actionIndex, dimensionType] = selectedIndex.split('-');
+            const selectedProduct = tags[parseInt(productIndex)];
+            const selectedAction = selectedProduct.actions[parseInt(actionIndex)];
+
+            const pathParts = [
+                selectedProduct.product.replace(/ /g, '_'),
+                selectedAction.name.replace(/ /g, '_')
+            ];
+
+            let tooltip = `Product: ${selectedProduct.product}\nAction: ${selectedAction.name}`;
+
+            // Only add dimension parts if this is not a base tag
+            if (dimensionType !== 'base') {
+                const selectedDimensions = selectedAction.dimensions[parseInt(dimensionType)];
+                if (selectedDimensions.root_cause) {
+                    pathParts.push(selectedDimensions.root_cause.replace(/ /g, '_'));
+                    tooltip += `\nRoot cause: ${selectedDimensions.root_cause}`;
+                }
+                if (selectedDimensions.entity) {
+                    pathParts.push(selectedDimensions.entity.replace(/ /g, '_'));
+                    tooltip += `\nEntity: ${selectedDimensions.entity}`;
+                }
+                // User type is included in tooltip but not in path
+                if (selectedDimensions.user_type) {
+                    tooltip += `\nUser type: ${selectedDimensions.user_type}`;
+                }
+            }
+
+            const formattedPath = pathParts.join('_').toLowerCase();
+            
+            const selectedTagDisplay = document.getElementById('selected_tag_underscore_format');
+            selectedTagDisplay.innerHTML = `case flow shows: <a href="#" onclick="return false;" style="font-weight:bold;color:gold">${formattedPath} </a>`;
+            selectedTagDisplay.title = tooltip; // Add tooltip to the display element
+        });
+        
+        // Save dimensions to localStorage
+        function saveDimensions() {
+            localStorage.setItem('dimensions', JSON.stringify(dimensions));
+        }
+        
+        // Save tags to localStorage
+        function saveTags() {
+            localStorage.setItem('tags', JSON.stringify(tags));
+        }
+        
+        // Rebuild the visual hierarchy from saved tags
+        function rebuildHierarchy() {
+            hierarchyContainer.innerHTML = '';
+            
+            tags.forEach(tag => {
+                // Add product (dimension 1)
+                const productId = 'dim1_' + generateId();
+                const productContainer = document.createElement('div');
+                productContainer.className = 'dimension-container';
+                productContainer.id = productId;
+                productContainer.dataset.level = '1';
+                productContainer.dataset.value = tag.product;
+                
+                const productEl = document.createElement('div');
+                productEl.className = 'dimension-item';
+                productEl.textContent = tag.product;
+                
+                const addDim2Btn = document.createElement('button');
+                addDim2Btn.className = 'btn btn-primary add-btn';
+                addDim2Btn.textContent = 'Add Action';
+                addDim2Btn.addEventListener('click', () => {
+                    openSelectModal('action', productId);
+                });
+                
+                productContainer.appendChild(productEl);
+                productContainer.appendChild(addDim2Btn);
+                hierarchyContainer.appendChild(productContainer);
+                
+                // Add actions (dimension 2) and their level 3 items
+                tag.actions.forEach(action => {
+                    const actionId = 'dim2_' + generateId();
+                    const actionContainer = document.createElement('div');
+                    actionContainer.className = 'dimension-container indent-1';
+                    actionContainer.id = actionId;
+                    actionContainer.dataset.level = '2';
+                    actionContainer.dataset.value = action.name;
+                    actionContainer.dataset.parent = productId;
+                    
+                    const actionEl = document.createElement('div');
+                    actionEl.className = 'dimension-item';
+                    actionEl.innerHTML = `${action.name} <span style="color: #666; font-size: 0.9em;">[${action.tag_id}]</span>`;
+                    
+                    const addLevel3Btn = document.createElement('button');
+                    addLevel3Btn.className = 'btn btn-primary add-btn';
+                    addLevel3Btn.textContent = 'Add other dimensions';
+                    addLevel3Btn.addEventListener('click', () => {
+                        openLevel3Modal(actionId);
+                    });
+                    
+                    actionContainer.appendChild(actionEl);
+                    actionContainer.appendChild(addLevel3Btn);
+                    hierarchyContainer.appendChild(actionContainer);
+                    
+                    // Add level 3 items
+                    action.dimensions.forEach(dim => {
+                        const level3Id = 'level3_' + generateId();
+                        const level3Container = document.createElement('div');
+                        level3Container.className = 'dimension-container indent-2';
+                        level3Container.id = level3Id;
+                        level3Container.dataset.level = '3';
+                        level3Container.dataset.parent = actionId;
+                        level3Container.dataset.dim3 = dim.root_cause || '';
+                        level3Container.dataset.dim4 = dim.entity || '';
+                        level3Container.dataset.dim5 = dim.user_type || '';
+                        
+                        let displayText = 'Level 3: ';
+                        if (dim.root_cause) displayText += `Dim3: ${dim.root_cause} `;
+                        if (dim.entity) displayText += `Dim4: ${dim.entity} `;
+                        if (dim.user_type) displayText += `Dim5: ${dim.user_type}`;
+                        if (!dim.root_cause && !dim.entity && !dim.user_type) displayText += '(None)';
+                        
+                        const level3El = document.createElement('div');
+                        level3El.className = 'dimension-item';
+                        level3El.innerHTML = `${displayText} <span style="color: #666; font-size: 0.9em;">[${dim.tag_id}]</span>`;
+                        
+                        level3Container.appendChild(level3El);
+                        hierarchyContainer.appendChild(level3Container);
+                    });
+                });
+            });
+        }
+        
+        // Add after initDimensions function
+        function renderSkills() {
+            const skillsContainer = document.getElementById('skillsContainer');
+            skillsContainer.innerHTML = '';
+
+            // Create a map to track checked items
+            const checkedItems = new Map();
+
+            tags.forEach(tag => {
+                // Create product container
+                const productContainer = document.createElement('div');
+                productContainer.className = 'skills-container';
+                
+                // Create product checkbox item
+                const productItem = document.createElement('div');
+                productItem.className = 'skills-item';
+                
+                const productCheckbox = document.createElement('input');
+                productCheckbox.type = 'checkbox';
+                productCheckbox.id = `skill_${tag.product}`;
+                productCheckbox.dataset.product = tag.product;
+                
+                const productLabel = document.createElement('label');
+                productLabel.htmlFor = `skill_${tag.product}`;
+                productLabel.textContent = tag.product;
+                
+                productItem.appendChild(productCheckbox);
+                productItem.appendChild(productLabel);
+                productContainer.appendChild(productItem);
+
+                // Handle product checkbox change
+                productCheckbox.addEventListener('change', (e) => {
+                    const actionCheckboxes = productContainer.querySelectorAll('.skills-actions input[type="checkbox"]');
+                    actionCheckboxes.forEach(cb => {
+                        cb.checked = e.target.checked;
+                        handleCheckboxChange(cb, e.target.checked);
+                    });
+                    handleCheckboxChange(e.target, e.target.checked);
+                });
+
+                // Create actions container
+                const actionsContainer = document.createElement('div');
+                actionsContainer.className = 'skills-actions';
+
+                // Add action checkboxes
+                tag.actions.forEach(action => {
+                    const actionItem = document.createElement('div');
+                    actionItem.className = 'skills-item';
+                    
+                    const actionCheckbox = document.createElement('input');
+                    actionCheckbox.type = 'checkbox';
+                    actionCheckbox.id = `skill_${tag.product}_${action.name}`;
+                    actionCheckbox.dataset.product = tag.product;
+                    actionCheckbox.dataset.action = action.name;
+                    
+                    const actionLabel = document.createElement('label');
+                    actionLabel.htmlFor = `skill_${tag.product}_${action.name}`;
+                    actionLabel.textContent = action.name;
+                    
+                    actionCheckbox.addEventListener('change', (e) => {
+                        handleCheckboxChange(e.target, e.target.checked);
+                        
+                        // Update parent checkbox state
+                        const allActionCheckboxes = actionsContainer.querySelectorAll('input[type="checkbox"]');
+                        const allChecked = Array.from(allActionCheckboxes).every(cb => cb.checked);
+                        const anyChecked = Array.from(allActionCheckboxes).some(cb => cb.checked);
+                        
+                        productCheckbox.checked = allChecked;
+                        productCheckbox.indeterminate = anyChecked && !allChecked;
+                    });
+                    
+                    actionItem.appendChild(actionCheckbox);
+                    actionItem.appendChild(actionLabel);
+                    actionsContainer.appendChild(actionItem);
+                });
+
+                productContainer.appendChild(actionsContainer);
+                skillsContainer.appendChild(productContainer);
+            });
+
+            // Function to handle checkbox changes
+            function handleCheckboxChange(checkbox, checked) {
+                const key = checkbox.dataset.action 
+                    ? `${checkbox.dataset.product}/${checkbox.dataset.action}`
+                    : checkbox.dataset.product;
+                    
+                if (checked) {
+                    checkedItems.set(key, {
+                        product: checkbox.dataset.product,
+                        action: checkbox.dataset.action || null
+                    });
+                } else {
+                    checkedItems.delete(key);
+                }
+            }
+        }
+
+        // Initialize the page
+        initDimensions();
+
+        // Add tag lookup functionality
+        const tagLookupInput = document.getElementById('tagLookupInput');
+        const lookupTagBtn = document.getElementById('lookupTagBtn');
+        const tagLookupResult = document.getElementById('tagLookupResult');
+        const dimensionsInfo = document.getElementById('dimensionsInfo');
+        const skillInfo = document.getElementById('skillInfo');
+
+        lookupTagBtn.addEventListener('click', () => {
+            const tagId = tagLookupInput.value.trim().toLowerCase();
+            if (!tagId) return;
+
+            // Search through all tags to find matching tag_id
+            let foundTag = null;
+            let foundAction = null;
+            let foundDimension = null;
+
+            for (const tag of tags) {
+                for (const action of tag.actions) {
+                    // Check if this is a level 2 (action) tag_id
+                    if (action.tag_id === tagId) {
+                        foundTag = tag;
+                        foundAction = action;
+                        break;
+                    }
+                    
+                    // Check level 3 dimensions
+                    for (const dimension of action.dimensions) {
+                        if (dimension.tag_id === tagId) {
+                            foundTag = tag;
+                            foundAction = action;
+                            foundDimension = dimension;
+                            break;
+                        }
+                    }
+                    if (foundTag) break;
+                }
+                if (foundTag) break;
+            }
+
+            if (foundTag) {
+                // Show the results container
+                tagLookupResult.style.display = 'block';
+                
+                // Display dimensions info
+                let dimensionsText = `<strong>Product:</strong> ${foundTag.product}<br>`;
+                dimensionsText += `<strong>Action:</strong> ${foundAction.name}<br>`;
+                
+                if (foundDimension) {
+                    if (foundDimension.root_cause) {
+                        dimensionsText += `<strong>Root cause:</strong> ${foundDimension.root_cause}<br>`;
+                    }
+                    if (foundDimension.entity) {
+                        dimensionsText += `<strong>Entity:</strong> ${foundDimension.entity}<br>`;
+                    }
+                    if (foundDimension.user_type) {
+                        dimensionsText += `<strong>User type:</strong> ${foundDimension.user_type}`;
+                    }
+                }
+                dimensionsInfo.innerHTML = dimensionsText;
+                
+                // Display skill info
+                skillInfo.innerHTML = `This tag will route to agent with skill: <strong>${foundAction.name}</strong>`;
+            } else {
+                // Show not found message
+                tagLookupResult.style.display = 'block';
+                dimensionsInfo.innerHTML = 'No tag found with this ID';
+                skillInfo.innerHTML = '';
+            }
+        });
+
+        // Add the reset functionality after the existing script
+        const resetTagsBtn = document.getElementById('resetTagsBtn');
+
+        resetTagsBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset all tags? This cannot be undone.')) {
+                // Clear tags array
+                tags = [];
+                // Clear from localStorage
+                localStorage.removeItem('tags');
+                // Clear the visual hierarchy
+                hierarchyContainer.innerHTML = '';
+                // Re-render tags
+                renderTags();
+            }
+        });
+
+        // Add after other event listeners
+        toggleJsonBtn.addEventListener('click', () => {
+            if (tagsJsonContainer.style.maxHeight === '0px' || tagsJsonContainer.style.maxHeight === '') {
+                tagsJsonContainer.style.maxHeight = tagsJsonContainer.scrollHeight + 'px';
+                toggleJsonBtn.textContent = 'Collapse JSON';
+            } else {
+                tagsJsonContainer.style.maxHeight = '0';
+                toggleJsonBtn.textContent = 'Expand JSON';
+            }
+        });
+    </script>
+</body>
+</html>
