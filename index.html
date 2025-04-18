@@ -941,35 +941,30 @@
             const selectedProduct = tags[parseInt(productIndex)];
             const selectedAction = selectedProduct.actions[parseInt(actionIndex)];
 
-            const pathParts = [
-                selectedProduct.product.replace(/ /g, '_'),
-                selectedAction.name.replace(/ /g, '_')
-            ];
-
             let tooltip = `Product: ${selectedProduct.product}\nAction: ${selectedAction.name}`;
+            let tag_id;
 
-            // Only add dimension parts if this is not a base tag
-            if (dimensionType !== 'base') {
+            // Determine which tag_id to use based on whether it's a base tag or dimension tag
+            if (dimensionType === 'base') {
+                tag_id = selectedAction.tag_id;
+            } else {
                 const selectedDimensions = selectedAction.dimensions[parseInt(dimensionType)];
+                tag_id = selectedDimensions.tag_id;
+                
                 if (selectedDimensions.root_cause) {
-                    pathParts.push(selectedDimensions.root_cause.replace(/ /g, '_'));
                     tooltip += `\nRoot cause: ${selectedDimensions.root_cause}`;
                 }
                 if (selectedDimensions.entity) {
-                    pathParts.push(selectedDimensions.entity.replace(/ /g, '_'));
                     tooltip += `\nEntity: ${selectedDimensions.entity}`;
                 }
-                // User type is included in tooltip but not in path
                 if (selectedDimensions.user_type) {
                     tooltip += `\nUser type: ${selectedDimensions.user_type}`;
                 }
             }
 
-            const formattedPath = pathParts.join('_').toLowerCase();
-            
             const selectedTagDisplay = document.getElementById('selected_tag_underscore_format');
-            selectedTagDisplay.innerHTML = `case flow shows: <a href="#" onclick="return false;" style="font-weight:bold;color:gold">${formattedPath} </a>`;
-            selectedTagDisplay.title = tooltip; // Add tooltip to the display element
+            selectedTagDisplay.innerHTML = `case flow shows: <a href="#" onclick="return false;" style="font-weight:bold;color:gold">${tag_id}</a>`;
+            selectedTagDisplay.title = tooltip;
         });
         
         // Save dimensions to localStorage
