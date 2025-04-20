@@ -187,75 +187,6 @@
     .skills-actions {
         margin-left: 20px;
     }
-
-    .custom-dropdown {
-        position: relative;
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-
-    .custom-dropdown-content {
-        opacity: 0;
-        visibility: hidden;
-        position: absolute;
-        top: calc(100% + 2px);
-        left: 0;
-        right: 0;
-        background-color: white;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 1rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.2s ease;
-        pointer-events: none;
-    }
-
-    .custom-dropdown.open .custom-dropdown-content {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
-    }
-
-    .custom-dropdown-header {
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background-color: white;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .custom-dropdown-header:hover {
-        background-color: #f8f9fa;
-    }
-
-    .custom-dropdown-placeholder {
-        color: #6c757d;
-    }
-
-    .custom-dropdown-arrow {
-        transition: transform 0.2s;
-    }
-
-    .custom-dropdown.open .custom-dropdown-arrow {
-        transform: rotate(180deg);
-    }
-
-    .custom-dropdown-selected-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-    }
-
-    .custom-dropdown-tag {
-        background-color: #e3f2fd;
-        color: #1976d2;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.9em;
-    }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -267,10 +198,8 @@
             <button class="tab-btn" data-tab="section1">1. Dimension management</button>
             <button class="tab-btn" data-tab="section2">2. CS Tags management</button>
             <button class="tab-btn" data-tab="section3">3. Chat</button>
-            <button class="tab-btn" data-tab="section6">3. Chat alternative</button>
             <button class="tab-btn" data-tab="section4">4. Skills</button>
             <button class="tab-btn" data-tab="section5">5. Tag lookup</button>
-        
         </div>
 
 
@@ -381,46 +310,6 @@
         </div>
     </div>
 </div>
-
-<div class="section" data-tab-content="section6" style="display: none;">
-            <div class="section">
-                <h2 class="section-title text-xl font-semibold">Alternative tag selection</h2>
-                
-                <div class="custom-dropdown">
-                    <div class="custom-dropdown-header">
-                        <span class="custom-dropdown-placeholder">tag selector</span>
-                        <span class="custom-dropdown-arrow">▼</span>
-                    </div>
-                    <div class="custom-dropdown-content">
-                        <div class="mb-4">
-                            <label for="level2TagDropdown" class="block mb-2 font-medium">filter and select Tag (2 dimension only):</label>
-                            <input type="text" id="tagSearchInput" class="w-full p-2 border rounded mb-2" placeholder="Search for tags...">
-                            <select id="level2TagDropdown" class="w-full">
-                                <option value="">-- Select a tag --</option>
-                            </select>
-                        </div>
-                        <div>
-                            Optional tags
-                        </div>
-                        <div class="mb-4">
-                            <label for="rootCauseSelect" class="block mb-2 font-medium">Root Cause:</label>
-                            <select id="rootCauseSelect" class="w-full">
-                                <option value="">-- Select Root Cause --</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="entitySelect" class="block mb-2 font-medium">Entity:</label>
-                            <select id="entitySelect" class="w-full">
-                                <option value="">-- Select Entity --</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="markingExperimentResult" class="mt-4 p-4 bg-gray-100 rounded"></div>
-            </div>
-        </div>
 
 
         <!-- Add Item Modal -->
@@ -883,9 +772,9 @@
             itemContainer.dataset.dim5 = dim5Value;
             
             let displayText = 'Level 3: ';
-            if (dim3Value) displayText += `root_cause: ${dim3Value} `;
-            if (dim4Value) displayText += `entuty: ${dim4Value} `;
-            if (dim5Value) displayText += `user_type: ${dim5Value}`;
+            if (dim3Value) displayText += `Dim3: ${dim3Value} `;
+            if (dim4Value) displayText += `Dim4: ${dim4Value} `;
+            if (dim5Value) displayText += `Dim5: ${dim5Value}`;
             if (!dim3Value && !dim4Value && !dim5Value) displayText += '(None)';
             
             const itemEl = document.createElement('div');
@@ -1154,9 +1043,9 @@
                         level3Container.dataset.dim5 = dim.user_type || '';
                         
                         let displayText = 'Level 3: ';
-                        if (dim.root_cause) displayText += `root_cause: ${dim.root_cause} `;
-                        if (dim.entity) displayText += `entity: ${dim.entity} `;
-                        if (dim.user_type) displayText += `user_type: ${dim.user_type}`;
+                        if (dim.root_cause) displayText += `Dim3: ${dim.root_cause} `;
+                        if (dim.entity) displayText += `Dim4: ${dim.entity} `;
+                        if (dim.user_type) displayText += `Dim5: ${dim.user_type}`;
                         if (!dim.root_cause && !dim.entity && !dim.user_type) displayText += '(None)';
                         
                         const level3El = document.createElement('div');
@@ -1366,166 +1255,6 @@
                 toggleJsonBtn.textContent = 'Expand JSON';
             }
         });
-
-        // Add section 6 functionality
-        const tagSearchInput = document.getElementById('tagSearchInput');
-        const level2TagDropdown = document.getElementById('level2TagDropdown');
-        const rootCauseSelect = document.getElementById('rootCauseSelect');
-        const entitySelect = document.getElementById('entitySelect');
-        const markingExperimentResult = document.getElementById('markingExperimentResult');
-
-        // Function to populate the level 2 tag dropdown
-        function populateLevel2Tags(searchText = '') {
-            level2TagDropdown.innerHTML = '<option value="">-- Select a tag --</option>';
-            
-            tags.forEach((product, productIndex) => {
-                product.actions.forEach((action, actionIndex) => {
-                    const optionText = `${product.product} / ${action.name}`;
-                    if (!searchText || optionText.toLowerCase().includes(searchText.toLowerCase())) {
-                        const option = document.createElement('option');
-                        option.value = `${productIndex}-${actionIndex}`;
-                        option.textContent = optionText;
-                        level2TagDropdown.appendChild(option);
-                    }
-                });
-            });
-        }
-
-        // Function to populate root cause and entity dropdowns
-        function populateDimensionDropdowns() {
-            rootCauseSelect.innerHTML = '<option value="">-- Select Root Cause --</option>';
-            entitySelect.innerHTML = '<option value="">-- Select Entity --</option>';
-
-            dimensions.root_cause.forEach(cause => {
-                const option = document.createElement('option');
-                option.value = cause;
-                option.textContent = cause;
-                rootCauseSelect.appendChild(option);
-            });
-
-            dimensions.entity.forEach(entity => {
-                const option = document.createElement('option');
-                option.value = entity;
-                option.textContent = entity;
-                entitySelect.appendChild(option);
-            });
-        }
-
-        // Add search functionality
-        tagSearchInput.addEventListener('input', (e) => {
-            populateLevel2Tags(e.target.value);
-        });
-
-        // Event handlers for dropdowns
-        level2TagDropdown.addEventListener('change', updateMarkingResult);
-        rootCauseSelect.addEventListener('change', updateMarkingResult);
-        entitySelect.addEventListener('change', updateMarkingResult);
-
-        function updateMarkingResult() {
-            if (!level2TagDropdown.value) {
-                markingExperimentResult.innerHTML = '';
-                return;
-            }
-
-            const [productIndex, actionIndex] = level2TagDropdown.value.split('-');
-            const selectedProduct = tags[parseInt(productIndex)];
-            const selectedAction = selectedProduct.actions[parseInt(actionIndex)];
-
-            // Always use the base tag_id (product_action format)
-            const tag_id = selectedAction.tag_id;
-            let tooltip = `Product: ${selectedProduct.product}\nAction: ${selectedAction.name}`;
-
-            // Add root cause and entity to tooltip only if selected
-            if (rootCauseSelect.value) {
-                tooltip += `\nRoot cause: ${rootCauseSelect.value}`;
-            }
-            if (entitySelect.value) {
-                tooltip += `\nEntity: ${entitySelect.value}`;
-            }
-
-            // Display the result
-            markingExperimentResult.innerHTML = `Selected tag: <a href="#" onclick="return false;" style="font-weight:bold;color:gold">${tag_id}</a>`;
-            markingExperimentResult.title = tooltip;
-        }
-
-        // Add section 6 tab button
-        //const section6Button = document.createElement('button');
-        //section6Button.className = 'tab-btn';
-        //section6Button.setAttribute('data-tab', 'section6');
-        //section6Button.textContent = '6. Marking experiment';
-        //document.querySelector('.tabs').appendChild(section6Button);
-
-        // Add click event handler for section 6 button
-        //section6Button = document.querySelector('[data-tab="section6"]');
-        //section6Button.addEventListener('click', () => {
-            // Hide all sections
-         //   tabContents.forEach(content => {
-         //       content.style.display = 'none';
-          //  });
-            // Show section 6
-           // document.querySelector('[data-tab-content="section6"]').style.display = 'block';
-            // Update active state of buttons
-           // tabButtons.forEach(btn => btn.classList.remove('active'));
-           // section6Button.classList.add('active');
-        //});
-
-        // Initialize section 6 dropdowns
-        populateLevel2Tags();
-        populateDimensionDropdowns();
-
-        // Add custom dropdown functionality
-        const customDropdown = document.querySelector('.custom-dropdown');
-        const dropdownHeader = customDropdown.querySelector('.custom-dropdown-header');
-        const dropdownPlaceholder = customDropdown.querySelector('.custom-dropdown-placeholder');
-
-        // Toggle dropdown on header click
-        dropdownHeader.addEventListener('click', () => {
-            customDropdown.classList.toggle('open');
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!customDropdown.contains(e.target)) {
-                customDropdown.classList.remove('open');
-            }
-        });
-
-        // Update header text based on selections
-        function updateDropdownHeader() {
-            const selectedTags = [];
-            
-            if (level2TagDropdown.value) {
-                const [productIndex, actionIndex] = level2TagDropdown.value.split('-');
-                const selectedProduct = tags[parseInt(productIndex)];
-                const selectedAction = selectedProduct.actions[parseInt(actionIndex)];
-                selectedTags.push(`${selectedProduct.product} / ${selectedAction.name}`);
-            }
-            
-            if (rootCauseSelect.value) {
-                selectedTags.push(`Root cause: ${rootCauseSelect.value}`);
-            }
-            
-            if (entitySelect.value) {
-                selectedTags.push(`Entity: ${entitySelect.value}`);
-            }
-
-            if (selectedTags.length > 0) {
-                dropdownPlaceholder.innerHTML = '<div class="custom-dropdown-selected-tags">' + 
-                    selectedTags.map(tag => `<span class="custom-dropdown-tag">${tag}</span>`).join('') + 
-                    '</div>';
-            } else {
-                dropdownPlaceholder.textContent = 'Select tag components...';
-            }
-        }
-
-        // Update header when selections change
-        level2TagDropdown.addEventListener('change', updateDropdownHeader);
-        rootCauseSelect.addEventListener('change', updateDropdownHeader);
-        entitySelect.addEventListener('change', updateDropdownHeader);
-
-        // Initialize section 6 dropdowns
-        populateLevel2Tags();
-        populateDimensionDropdowns();
     </script>
 </body>
 </html>
